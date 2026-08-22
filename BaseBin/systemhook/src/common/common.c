@@ -118,7 +118,7 @@ xpc_object_t jbuserconfig_get_value(const char *key)
 	return NULL;
 }
 
-static kSpawnConfig spawn_config_for_executable(const char* path, char *const argv[restrict])
+kSpawnConfig spawn_config_for_executable(const char* path, char *const argv[restrict])
 {
 	// Blacklist to ensure general system stability
 	// I don't like this but for some processes it seems neccessary
