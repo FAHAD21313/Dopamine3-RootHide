@@ -32,9 +32,12 @@ jobs:
           xcodebuild -version
           xcrun --sdk iphoneos --show-sdk-path
 
-      - name: Install Theos
+      - name: Install Theos + SDKs
         run: |
           git clone --depth 1 https://github.com/roothide/theos.git $HOME/theos-roothide
+          mkdir -p $HOME/theos-roothide/sdks
+          curl -sL https://github.com/theos/sdks/archive/refs/heads/master.tar.gz | tar -xz -C $HOME/theos-roothide/sdks --strip-components=1
+          ls $HOME/theos-roothide/sdks | head -5
           echo "THEOS=$HOME/theos-roothide" >> $GITHUB_ENV
 
       - name: Install dependencies (brew)
