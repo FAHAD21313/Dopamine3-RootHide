@@ -40,7 +40,7 @@ jobs:
       - name: Install dependencies (brew)
         run: |
           brew install ldid libarchive xz || true
-          echo "$(brew --prefix)/opt/libarchive/lib" >> $GITHUB_ENV && true
+          echo "LIBARCHIVE_LIB=$(brew --prefix)/opt/libarchive/lib" >> $GITHUB_ENV
 
       - name: Cache Procursus bootstrap
         id: bootstrap-cache
@@ -74,6 +74,8 @@ jobs:
       - name: Build BaseBin
         run: |
           export THEOS=$HOME/theos-roothide
+          export LDFLAGS="-L$(brew --prefix)/opt/libarchive/lib"
+          export CPPFLAGS="-I$(brew --prefix)/opt/libarchive/include"
           cd BaseBin
           make -j$(sysctl -n hw.ncpu) 2>&1 | tee build_basebin.log || make 2>&1 | tail -50
 
