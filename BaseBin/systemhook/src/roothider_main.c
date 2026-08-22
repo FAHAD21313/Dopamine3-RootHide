@@ -13,7 +13,7 @@
 #include "sandbox.h"
 #include "roothider.h"
 
-const char* HOOK_DYLIB_PATH = NULL;
+static char* g_roothide_hook_dylib_path = NULL;
 
 bool dyld_patch_fallback_enabled = false;
 
@@ -179,7 +179,7 @@ void trust_insert_libraries(char** envc)
 	if(!DYLD_INSERT_LIBRARIES) return;
 
 	string_enumerate_components(DYLD_INSERT_LIBRARIES, ":", ^(const char *path, bool *stop) {
-		if (strcmp(path, HOOK_DYLIB_PATH) != 0) {
+		if (strcmp(path, g_roothide_hook_dylib_path ? g_roothide_hook_dylib_path : "") != 0) {
 			jbclient_trust_library_recurse(path, NULL);
 		}
 	});
@@ -471,7 +471,7 @@ void roothide_init()
 		}
 	}
 
-	HOOK_DYLIB_PATH = strdup(dyld_image_path_containing_address(&__dso_handle));
+	g_roothide_hook_dylib_path = strdup(dyld_image_path_containing_address(&__dso_handle));
 
 	if(parse_dyldhook_jbinfo(NULL, NULL, NULL, NULL) != 0)
 	{

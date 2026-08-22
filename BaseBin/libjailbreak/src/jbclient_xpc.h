@@ -49,6 +49,8 @@ int jbclient_dopamine_drop_root(void);
 
 // roothide extensions (ported from Dopamine2-roothide jbclient_roothide.c)
 mach_port_t jbclient_jailbreakd_lookup(void);
+bool jbclient_dyld_patch_enabled(void);
+int jbclient_set_dyld_patch(bool enabled);
 bool jbclient_roothide_jailbroken(void);
 int jbclient_trust_executable_recurse(const char *executablePath, xpc_object_t preferredArchsArray);
 int jbclient_trust_library_recurse(const char *libraryPath, void *addressInCaller);
