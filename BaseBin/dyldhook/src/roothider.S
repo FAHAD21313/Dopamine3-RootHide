@@ -12,9 +12,7 @@
 .align 4
 
 
-//MAKE_TRAMPOLINE(strncmp)
-MAKE_TRAMPOLINE(strlcpy)
-MAKE_TRAMPOLINE(strlcat)
+// trampolines already provided by main.S (3.0.8); only expandAtLoaderPath hook here
 
 .global _MACHOMERGER_ORIG__ZN5dyld46Loader18expandAtLoaderPathERNS_12RuntimeStateEPKcRKNS0_11LoadOptionsEPKS0_bPc
 .global _MACHOMERGER_HOOKTRAMPOLINE__ZN5dyld46Loader18expandAtLoaderPathERNS_12RuntimeStateEPKcRKNS0_11LoadOptionsEPKS0_bPc
