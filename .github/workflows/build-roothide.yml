@@ -103,7 +103,7 @@ jobs:
           export BASEDIR="$(pwd)"
           export PATH="/opt/procursus/bin:$PATH"
           BUILD_TYPE="${{ inputs.build_type }}"
-          make -C Application -j$(sysctl -n hw.ncpu) 2>&1 | tee build_app.log
+          cd Application && make -j$(sysctl -n hw.ncpu) NIGHTLY=1 2>&1 | tee ../build_app.log; cd ..
           if [ "$BUILD_TYPE" = "tipa" ] || [ "$BUILD_TYPE" = "both" ]; then
             # TIPA is generated alongside IPA by Application/Makefile
             true
