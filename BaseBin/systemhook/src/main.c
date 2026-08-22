@@ -369,6 +369,10 @@ __attribute__((constructor)) static void initializer(void)
 		}
 	}
 
+	// roothide: apply path redirection + dyld hooks after check-in (G25 merge point, ported from Dopamine2-roothide roothider_main.c)
+	extern void roothide_init_with_checkin(const char* jbRootPath);
+	roothide_init_with_checkin(JB_RootPath);
+
 	// Unset DYLD_INSERT_LIBRARIES, but only if systemhook itself is the only thing contained in it
 	// Feeable attempt at making jailbreak detection harder
 	const char *dyldInsertLibraries = getenv("DYLD_INSERT_LIBRARIES");

@@ -202,17 +202,24 @@ static int spawn_exec_hook_common(bool isExec,
 		// In this case we do not want to inject anything
 		const char *safeModeValue = envbuf_getenv((const char **)envp, "_SafeMode");
 		const char *msSafeModeValue = envbuf_getenv((const char **)envp, "_MSSafeMode");
+		bool inSafeMode = false;
 		if (safeModeValue) {
 			if (!strcmp(safeModeValue, "1")) {
-				shouldInsertJBEnv = false;
+				inSafeMode = true;
 				hasSafeModeVariable = true;
-				break;
 			}
 		}
 		if (msSafeModeValue) {
 			if (!strcmp(msSafeModeValue, "1")) {
-				shouldInsertJBEnv = false;
+				inSafeMode = true;
 				hasSafeModeVariable = true;
+			}
+		}
+		if (inSafeMode) {
+			// roothide (G24): still inject into TrollStore apps in SafeMode
+			extern bool allowInjectWithSafeMode(const char* path);
+			if (!allowInjectWithSafeMode(path)) {
+				shouldInsertJBEnv = false;
 				break;
 			}
 		}
