@@ -17,6 +17,18 @@ static char* g_roothide_hook_dylib_path = NULL;
 
 bool dyld_patch_fallback_enabled = false;
 
+// raw syscall trampolines (ported from roothide common.c)
+#include <sys/syscall.h>
+int __posix_spawn_orig(pid_t *restrict pid, const char *restrict path, struct _posix_spawn_args_desc *desc, char *const argv[restrict], char * const envp[restrict])
+{
+	return syscall(SYS_posix_spawn, pid, path, desc, argv, envp);
+}
+
+int __execve_orig(const char *path, char *const argv[], char *const envp[])
+{
+	return syscall(SYS_execve, path, argv, envp);
+}
+
 //export for PatchLoader
 __attribute__((visibility("default"))) int PLRequiredJIT() {
 	return 0;
