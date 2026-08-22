@@ -48,6 +48,17 @@ jobs:
           brew install ldid libarchive xz || true
           echo "LIBARCHIVE_LIB=$(brew --prefix)/opt/libarchive/lib" >> $GITHUB_ENV
 
+      - name: Build and Install trustcache
+        run: |
+          git clone https://github.com/CRKatri/trustcache $HOME/trustcache-src
+          cd $HOME/trustcache-src
+          export CFLAGS="$CFLAGS -I$(brew --prefix openssl)/include -arch arm64"
+          export LDFLAGS="$LDFLAGS -L$(brew --prefix openssl)/lib -arch arm64"
+          make -j$(sysctl -n hw.logicalcpu) OPENSSL=1
+          sudo mkdir -p /opt/procursus/bin
+          sudo cp trustcache /opt/procursus/bin/
+          trustcache version 2>/dev/null || /opt/procursus/bin/trustcache version 2>/dev/null || echo "trustcache installed" 
+
       - name: Cache Procursus bootstrap
         id: bootstrap-cache
         uses: actions/cache@v4
