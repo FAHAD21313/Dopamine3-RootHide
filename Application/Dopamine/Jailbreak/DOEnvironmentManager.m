@@ -113,6 +113,16 @@ extern char **environ;
         }
         
         if (!randomizedJailbreakPath) {
+            // roothide (G42): randomized root in Bundle/Application
+            for (NSString *subItem in [[NSFileManager defaultManager] contentsOfDirectoryAtPath:@"/var/containers/Bundle/Application/" error:nil]) {
+                if ([subItem hasPrefix:@".jbroot-"]) {
+                    randomizedJailbreakPath = [@"/var/containers/Bundle/Application/" stringByAppendingPathComponent:subItem];
+                    break;
+                }
+            }
+        }
+
+        if (!randomizedJailbreakPath) {
             // Second attempt at finding jailbreak root, look for Dopamine 1.x path, but as other jailbreaks use it too, make sure it is Dopamine
             // Some other jailbreaks also commit the sin of creating .installed_dopamine, for these we try to filter them out by checking for their installed_ file
             // If we find this and are sure it's from Dopamine 1.x, rename it so all Dopamine 2.x users will have the same path
@@ -149,6 +159,12 @@ extern char **environ;
             }
         }
     }
+}
+
+- (void)setJailbreakRootPath:(NSString *)path
+{
+    if (gSystemInfo.jailbreakInfo.rootPath) free(gSystemInfo.jailbreakInfo.rootPath);
+    gSystemInfo.jailbreakInfo.rootPath = strdup(path.fileSystemRepresentation);
 }
 
 - (NSError *)ensureJailbreakRootExists

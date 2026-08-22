@@ -243,22 +243,52 @@ NSString *const bootstrapErrorDomain = @"BootstrapErrorDomain";
     completion(nil);
 }
 
-- (NSError *)updateVarJbSymlink
+// roothide (G42/G41): randomized jbroot replaces fixed /var/jb.
+// Ported from roothide/Bootstrap bootstrap.m InstallBootstrap + Dopamine2-roothide DOBootstrapper.
+static uint64_t _jbrand_new(void)
 {
-    // Remove /var/jb as it might be wrong
-    NSError *error;
-    if (![self deleteSymlinkAtPath:@"/var/jb" error:&error]) {
-        if ([[NSFileManager defaultManager] fileExistsAtPath:@"/var/jb"]) {
-            if (![[NSFileManager defaultManager] removeItemAtPath:@"/var/jb" error:&error]) {
-                return [NSError errorWithDomain:bootstrapErrorDomain code:BootstrapErrorCodeFailedReplacing userInfo:@{NSLocalizedDescriptionKey : [NSString stringWithFormat:@"Removing /var/jb directory failed with error: %@", error]}];
-            }
-        }
-        else {
-            return [NSError errorWithDomain:bootstrapErrorDomain code:BootstrapErrorCodeFailedReplacing userInfo:@{NSLocalizedDescriptionKey : [NSString stringWithFormat:@"Removing /var/jb symlink failed with error: %@", error]}];
+    uint64_t value = ((uint64_t)arc4random()) | ((uint64_t)arc4random())<<32;
+    uint8_t check = value>>8 ^ value>>16 ^ value>>24 ^ value>>32 ^ value>>40 ^ value>>48 ^ value>>56;
+    return (value & ~0xFF) | check;
+}
+
+- (NSString *)locateOrCreateJailbreakRoot
+{
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *dir = @"/var/containers/Bundle/Application/";
+    NSString *jbrootPath = nil;
+
+    // find existing .jbroot-<jbrand> if present
+    for (NSString *item in [fm contentsOfDirectoryAtPath:dir error:nil]) {
+        if ([item hasPrefix:@".jbroot-"]) {
+            jbrootPath = [dir stringByAppendingPathComponent:item];
+            break;
         }
     }
 
-    return [self createSymlinkAtPath:@"/var/jb" toPath:JBROOT_PATH(@"/") createIntermediateDirectories:YES];;
+    if (!jbrootPath) {
+        // first install: create randomized root
+        uint64_t jbrand = _jbrand_new();
+        jbrootPath = [dir stringByAppendingPathComponent:[NSString stringWithFormat:@".jbroot-%016llX", jbrand]];
+        NSError *mkErr = nil;
+        if (![fm createDirectoryAtPath:jbrootPath withIntermediateDirectories:NO attributes:@{NSFilePosixPermissions:@(0755)} error:&mkErr]) {
+            return nil;
+        }
+    }
+
+    // secondary jbroot in AppGroup holding /var (G41)
+    NSString *secondaryRoot = @"/var/mobile/Containers/Shared/AppGroup/.jbroot-secondary";
+    if (![fm fileExistsAtPath:secondaryRoot]) {
+        [fm createDirectoryAtPath:secondaryRoot withIntermediateDirectories:YES attributes:nil error:nil];
+    }
+
+    return jbrootPath;
+}
+
+- (NSError *)updateVarJbSymlink
+{
+    // roothide style: NO /var/jb symlink. JBROOT_PATH resolves through the app's stored rootPath.
+    return nil;
 }
 
 - (void)prepareBootstrapWithCompletion:(void (^)(NSError *))completion
@@ -331,11 +361,13 @@ NSString *const bootstrapErrorDomain = @"BootstrapErrorDomain";
     
     NSString *basebinPath = JBROOT_PATH(@"/basebin");
     NSString *installedPath = JBROOT_PATH(@"/.installed_dopamine");
-    error = [self updateVarJbSymlink];
-    if (error) {
-        completion(error);
+    NSString *jbrootPath = [self locateOrCreateJailbreakRoot];
+    if (!jbrootPath) {
+        completion([NSError errorWithDomain:bootstrapErrorDomain code:BootstrapErrorCodeFailedExtracting userInfo:@{NSLocalizedDescriptionKey : @"Failed creating randomized jbroot"}]);
         return;
     }
+    // Persist chosen root for this boot via DOEnvironmentManager (roothide style)
+    [[DOEnvironmentManager sharedManager] setJailbreakRootPath:jbrootPath];
     
     if ([[NSFileManager defaultManager] fileExistsAtPath:basebinPath]) {
         if (![[NSFileManager defaultManager] removeItemAtPath:basebinPath error:&error]) {

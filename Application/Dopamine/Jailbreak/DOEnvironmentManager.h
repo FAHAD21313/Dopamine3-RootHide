@@ -42,6 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)accessibleSPTMPath;
 - (NSString *)accessibleTXMPath;
 - (void)locateJailbreakRoot;
+- (void)setJailbreakRootPath:(NSString *)path;
 - (NSError *)ensureJailbreakRootExists;
 
 - (void)setJailbroken:(BOOL)jailbroken withVersion:(NSString *)version;
