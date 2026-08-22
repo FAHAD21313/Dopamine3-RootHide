@@ -100,11 +100,15 @@ jobs:
       - name: Build Application + package IPA/TIPA
         run: |
           export THEOS=$HOME/theos-roothide
+          export BASEDIR="$(pwd)"
+          export PATH="/opt/procursus/bin:$PATH"
           BUILD_TYPE="${{ inputs.build_type }}"
-          if [ "$BUILD_TYPE" = "ipa" ] || [ "$BUILD_TYPE" = "both" ]; then
-            make package FINALPACKAGE=1 2>&1 | tee build_app.log || true
+          make -C Application -j$(sysctl -n hw.ncpu) 2>&1 | tee build_app.log
+          if [ "$BUILD_TYPE" = "tipa" ] || [ "$BUILD_TYPE" = "both" ]; then
+            # TIPA is generated alongside IPA by Application/Makefile
+            true
           fi
-          ls -la packages/ 2>/dev/null || echo "no packages dir"
+          ls -la Application/*.ipa Application/*.tipa 2>/dev/null
 
       - name: Collect artifacts
         run: |
