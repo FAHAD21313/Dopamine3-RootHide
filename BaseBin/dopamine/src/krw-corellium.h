@@ -1,1 +1,0 @@
-int corellium_krw_init(void);
