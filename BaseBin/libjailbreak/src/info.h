@@ -110,6 +110,13 @@ struct system_info {
 		uint64_t libsptm_frame_type_params;
 		uint64_t txm_developer_mode_storage;
 		uint64_t txm_trustcache_root;
+
+/************** roothide specfic ***********/
+		uint64_t nchashtbl;
+		uint64_t nchashmask;
+		uint64_t launch_env_logging;
+		uint64_t developer_mode_status;
+/************** roothide specfic ***********/
 	} kernelSymbol;
 
 	struct {
@@ -471,6 +478,10 @@ extern struct system_info gSystemInfo;
 	iterator(ctx, kernelSymbol.papt_ranges_compressed); \
 	iterator(ctx, kernelSymbol.libsptm_frame_type_params); \
 	iterator(ctx, kernelSymbol.txm_developer_mode_storage); \
+	iterator(ctx, kernelSymbol.nchashtbl); \
+	iterator(ctx, kernelSymbol.nchashmask); \
+	iterator(ctx, kernelSymbol.launch_env_logging); \
+	iterator(ctx, kernelSymbol.developer_mode_status); \
 	iterator(ctx, kernelSymbol.txm_trustcache_root);
 
 #define KERNEL_GADGETS_ITERATE(ctx, iterator) \
