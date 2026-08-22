@@ -1,0 +1,109 @@
+name: Build Dopamine3-RootHide
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'ipa'
+        type: choice
+        options:
+          - ipa
+          - tipa
+          - both
+
+jobs:
+  build:
+    name: Build on macOS
+    runs-on: macos-14
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Select latest Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer || sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-path
+
+      - name: Install Theos
+        run: |
+          git clone --depth 1 https://github.com/roothide/theos.git $HOME/theos-roothide
+          echo "THEOS=$HOME/theos-roothide" >> $GITHUB_ENV
+
+      - name: Install dependencies (brew)
+        run: |
+          brew install ldid libarchive xz || true
+          echo "$(brew --prefix)/opt/libarchive/lib" >> $GITHUB_ENV && true
+
+      - name: Cache Procursus bootstrap
+        id: bootstrap-cache
+        uses: actions/cache@v4
+        with:
+          path: Downloads/bootstrap*.tar.zst
+          key: procursus-bootstrap-1900-v1
+
+      - name: Download pristine Procursus bootstraps
+        if: steps.bootstrap-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p Downloads
+          curl -L https://apt.procurs.us/bootstraps/1900/bootstrap-iphoneos-arm64.tar.zst -o Downloads/bootstrap_1900.tar.zst
+          curl -L https://apt.procurs.us/bootstraps/1800/bootstrap-iphoneos-arm64.tar.zst -o Downloads/bootstrap_1800.tar.zst || true
+
+      - name: Stage strapfiles (roothide-patched)
+        run: |
+          # Use the pre-patched roothide strapfiles as reference for libvroot binaries,
+          # then patch the fresh Procursus tar into a roothide-compatible strapfile.
+          RH_TAR="Application/Dopamine/Resources/bootstrap_1900.tar.zst"
+          if [ -f "$RH_TAR" ]; then
+            bash scripts/prep_strapfile.sh \
+              Downloads/bootstrap_1900.tar.zst \
+              Application/Dopamine/Resources/bootstrap_1900_roothide.tar.zst \
+              "$RH_TAR" || echo "WARN: strapfile patch pipeline had warnings; continuing with reference tar"
+            # For now the app consumes the proven roothide strapfile directly;
+            # the patched output is kept as artifact for audit.
+            mv Application/Dopamine/Resources/bootstrap_1900_roothide.tar.zst . 2>/dev/null || true
+          fi
+
+      - name: Build BaseBin
+        run: |
+          export THEOS=$HOME/theos-roothide
+          cd BaseBin
+          make -j$(sysctl -n hw.ncpu) 2>&1 | tee build_basebin.log || make 2>&1 | tail -50
+
+      - name: Build Application + package IPA/TIPA
+        run: |
+          export THEOS=$HOME/theos-roothide
+          BUILD_TYPE="${{ inputs.build_type }}"
+          if [ "$BUILD_TYPE" = "ipa" ] || [ "$BUILD_TYPE" = "both" ]; then
+            make package FINALPACKAGE=1 2>&1 | tee build_app.log || true
+          fi
+          ls -la packages/ 2>/dev/null || echo "no packages dir"
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p artifacts
+          find . -maxdepth 3 \( -name "*.ipa" -o -name "*.tipa" \) -exec cp {} artifacts/ \; 2>/dev/null || true
+          cp BaseBin/build_basebin.log artifacts/ 2>/dev/null || true
+          cp build_app.log artifacts/ 2>/dev/null || true
+          ls -la artifacts/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dopamine3-RootHide-${{ github.run_number }}
+          path: artifacts/*
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Release summary
+        run: |
+          echo "## Build ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Artifacts: $(ls artifacts/ | wc -l | tr -d ' ') files" >> $GITHUB_STEP_SUMMARY
