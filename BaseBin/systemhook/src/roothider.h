@@ -1,5 +1,5 @@
 #include <spawn.h>
-#include "private.h"
+#include "common/private.h"
 
 #include <libjailbreak/jbroot.h>
 #include <libjailbreak/jbclient_xpc.h>

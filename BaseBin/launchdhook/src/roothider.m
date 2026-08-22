@@ -10,8 +10,6 @@
 #include "../systemhook/src/common/common.h"
 #include "../systemhook/src/common/envbuf.h"
 
-const char* HOOK_DYLIB_PATH = NULL;
-
 #define POSIX_SPAWN_PROC_TYPE_DRIVER 0x700
 extern int posix_spawnattr_getprocesstype_np(const posix_spawnattr_t *__restrict, int *__restrict) __API_AVAILABLE(macos(10.8), ios(6.0));
 extern int posix_spawnattr_setexceptionports_np(posix_spawnattr_t *__restrict, exception_mask_t, mach_port_t, exception_behavior_t, thread_state_flavor_t) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
@@ -105,8 +103,6 @@ void roothide_launchd_postinit(bool firstLoad)
 
 	if(firstLoad)
 	{
-		HOOK_DYLIB_PATH = "";
-		
 		if (__builtin_available(iOS 16.0, *))
 		{
 			hideDeveloperMode();

@@ -46,6 +46,7 @@ struct system_info {
 
 /************ roothide specific *********/
 		uint64_t jbrand;
+		uint64_t palera1n;
 		bool dyld_patch_enabled;
 /************ roothide specific *********/
 	} jailbreakInfo;
@@ -424,6 +425,7 @@ extern struct system_info gSystemInfo;
 	iterator(ctx, jailbreakInfo.rootPath); \
 	iterator(ctx, jailbreakInfo.appIdentifier); \
 	iterator(ctx, jailbreakInfo.jbrand); \
+	iterator(ctx, jailbreakInfo.palera1n); \
 	iterator(ctx, jailbreakInfo.dyld_patch_enabled);
 
 #define JAILBREAK_SETTINGS_ITERATE(ctx, iterator) \
