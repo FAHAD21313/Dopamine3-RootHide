@@ -38,6 +38,8 @@ libjailbreak: .build .include ChOma
 	@cp libjailbreak/libjailbreak.dylib .build
 	@mkdir -p .include/libjailbreak
 	@cp libjailbreak/src/*.h .include/libjailbreak
+	@rm -rf .include/libjailbreak/roothider
+	@cp -r libjailbreak/src/roothider .include/libjailbreak/
 
 systemhook: .build .include libjailbreak
 	$(MAKE) -C systemhook
