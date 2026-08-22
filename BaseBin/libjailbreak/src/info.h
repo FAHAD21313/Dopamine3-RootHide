@@ -42,7 +42,12 @@ struct system_info {
 	struct {
 		uint64_t usesPACBypass;
 		char *rootPath;
-		char *appIdentifier;
+		char *appIdentifier; // kept NULL under roothide (G-APP-ID1)
+
+/************ roothide specific *********/
+		uint64_t jbrand;
+		bool dyld_patch_enabled;
+/************ roothide specific *********/
 	} jailbreakInfo;
 
 	struct {
@@ -410,7 +415,9 @@ extern struct system_info gSystemInfo;
 #define JAILBREAK_INFO_ITERATE(ctx, iterator) \
 	iterator(ctx, jailbreakInfo.usesPACBypass); \
 	iterator(ctx, jailbreakInfo.rootPath); \
-	iterator(ctx, jailbreakInfo.appIdentifier);
+	iterator(ctx, jailbreakInfo.appIdentifier); \
+	iterator(ctx, jailbreakInfo.jbrand); \
+	iterator(ctx, jailbreakInfo.dyld_patch_enabled);
 
 #define JAILBREAK_SETTINGS_ITERATE(ctx, iterator) \
 	iterator(ctx, jailbreakSettings.markAppsAsDebugged); \
